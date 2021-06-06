@@ -1,9 +1,8 @@
 This is a fork from the North Star main branch: https://github.com/BryanChrisBrown/ProjectNorthStar/tree/realsense-integration
 
-# North Star Calibration Routine Gen 2
+# Headset 2D Calibration Routine
 
-This is a guide for the new, simplified Calibration routine.  Rather than align the physical components within a North Star to minimize the geometric raytracing error, this calibration instead grafts a camera calibration onto the headset itself.
-
+This is a guide for the new, simplified Calibration routine.  Rather than align the physical components within a North Star/Ariel headset to minimize the geometric raytracing error, this calibration instead grafts a camera calibration onto the headset itself.
 
 Before we start, you will need to ensure that you have a:
 
