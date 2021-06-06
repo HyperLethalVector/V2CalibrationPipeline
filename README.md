@@ -1,3 +1,5 @@
+This is a fork from the North Star main branch: https://github.com/BryanChrisBrown/ProjectNorthStar/tree/realsense-integration
+
 # North Star Calibration Routine Gen 2
 
 This is a guide for the new, simplified Calibration routine.  Rather than align the physical components within a North Star to minimize the geometric raytracing error, this calibration instead grafts a camera calibration onto the headset itself.
@@ -5,14 +7,14 @@ This is a guide for the new, simplified Calibration routine.  Rather than align 
 
 Before we start, you will need to ensure that you have a:
 
- - A Project North Star Headset
- - A Project North Star Calibration Stand
+ - A Project North Star/ Ariel Headset
+ - A Project North Star/ Ariel Calibration Stand
  - A Calibration Checkerboard (can be displayed on a monitor)
 
+If you're using the t261, you can skip the sensor calibration~
 
 Note that this new calibration routine does not require an external monitor.
-
-## Calibrating the Stand
+## Calibrating the Sensors
 
  - **captureChessboards.py** 
   - Running this script displays images from your stereo camera.  Show your chessboard to the camera and press **Z** to capture it from various angles.  Get ~30 shots.
@@ -26,7 +28,6 @@ Note that this new calibration routine does not require an external monitor.
 
 
 ## Calibrating the Headset
-
  - **captureGraycodes.py**
   - Ensure that your headset is placed on the calibration stand, with the stand's camera looking through it where the users' eyes will be.
   - Additionally ensure that your headset is plugged in and displaying imagery from your desktop.
