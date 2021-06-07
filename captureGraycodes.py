@@ -7,8 +7,8 @@ import pyrealsense2 as rs2
 import intelutils
 
 rigel = False
-realsense = True
-mock = False
+realsense = False
+mock = True
 
 if rigel:
   frameWidth  = 800
@@ -107,6 +107,12 @@ for leftEye in range(2):
             elif stage is 1:
               # Calculate the Monitor Mask and display it
               mask = cv2.threshold(cv2.subtract(frame, darkFrameBuffer), thresh=53, maxval=1, type=cv2.THRESH_BINARY)[1]
+              if leftEye == 0:
+                mask[:,0:halfpoint] = 0
+                cv2.imwrite("maskLeft.png",mask*whiteBrightness)
+              else:
+                mask[:,halfpoint:fullpoint] = 0                             
+                cv2.imwrite("maskRight.png",mask*whiteBrightness)
               #cv2.imshow("Graycode Display", mask * whiteBrightness)
               
               # Begin displaying the Width Bits
