@@ -149,42 +149,7 @@ fitPolynomialL = processData(leftData , calibrations['leftCameraMatrix' ], calib
 fitPolynomialR = processData(rightData, calibrations['rightCameraMatrix'], calibrations['rightDistCoeffs'], calibrations['R2'])
 
 # Save the Calibrations to a .json
-with open("NorthStarCalibration.json", 'w') as outfile:
-  json.dump(outputCalibration, outfile)
+with open("CalibrationResults.json", 'w') as outfile:
+  json.dump(outputCalibration, outfile, indent=2)
 
 # All this to normalize the view of the polynomial (to enhance contrast...)
-polynomialToDraw = fitPolynomialL.copy()
-xDraw = polynomialToDraw[:, :, 2].copy()
-yDraw = polynomialToDraw[:, :, 1].copy()
-cv2.normalize(polynomialToDraw[:, :, 2], dst=xDraw, alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
-cv2.normalize(polynomialToDraw[:, :, 1], dst=yDraw, alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
-polynomialToDraw[:, :, 2] = xDraw
-polynomialToDraw[:, :, 1] = 1.0-yDraw
-
-# Draw the cursor between the Screen Space UV's (Input) and the Rectilinear Space (Output)
-warpedPos = (0,0)
-def mouseMove(event, x, y, flags, param):
-    '''Callback that displays a mouse cursor mapped to the original data.'''
-    global dataToDraw, fitPolynomialR, warpedPos
-    if event == cv2.EVENT_MOUSEMOVE:
-      coord = fitPolynomialL[y, x]
-      coords_3d = np.ones((1, 1, 3))
-      coords_3d[0, 0, 0] = coord[2]
-      coords_3d[0, 0, 1] = coord[1]
-      coordd = cv2.fisheye.projectPoints(coords_3d, -cv2.Rodrigues(calibrations['R2'])[0], np.zeros((3)),
-                                         calibrations['leftCameraMatrix'], calibrations['leftDistCoeffs'])[0].reshape(2)
-      warpedPos = (int(coordd[0]), int(coordd[1]))
-
-      #warpedPos = (int(coord[2] * 800), int(coord[1] * 800))
-cv2.namedWindow("Polynomial Inverse"); cv2.setMouseCallback("Polynomial Inverse", mouseMove)
-
-# Every frame, display the Raw Data and the Polynomial Inverse
-key = cv2.waitKey(1)
-while (not (key & 0xFF == ord('q'))):
-  key = cv2.waitKey(1)
-
-  # Draw the Cursor Warped from Screen UV Space back to Camera Space through Rectilinear Space
-  dataToDraw = cv2.circle(leftData.copy(), warpedPos, 5, (255, 255, 255))
-
-  cv2.imshow("Raw Data", dataToDraw)
-  cv2.imshow("Polynomial Inverse", polynomialToDraw)

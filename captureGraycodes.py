@@ -7,20 +7,27 @@ import pyrealsense2 as rs2
 import intelutils
 
 rigel = False
-realsense = False
-mock = True
+realsense = True
+mock = False
 
 if rigel:
   frameWidth  = 800
   frameHeight = 800
+  halfpoint = 800
+  fullpoint = 1600  
 elif realsense:
   frameWidth = 848
   frameHeight = 800
+  halfpoint = 848
+  fullpoint = 1696
 elif mock:
   frameWidth = 512
   frameHeight = 512
-
-northStarSize = (2880, 1600)
+  halfpoint = 512
+  fullpoint = 1024
+northStarSize = (2560, 1440)
+halfPointDisplay = int(northStarSize[0]/2)
+fullPointDisplay = northStarSize[0]
 if mock:
   northStarSize = (1024, 512)
 
@@ -61,8 +68,6 @@ if rigel:
 key = cv2.waitKey(1)
 for leftEye in range(2):
   whiteBrightness = 127
-  halfpoint = int(northStarSize[0]/2)
-  fullpoint = int(northStarSize[0])
   allWhite           = np.ones       ((northStarSize[1], northStarSize[0]), dtype=np.uint8) * 100
   continuum          = np.arange     (0, 256,         dtype=np.uint8)
   continuum          = np.bitwise_xor(continuum, continuum//2) # Binary to Gray
@@ -92,57 +97,48 @@ for leftEye in range(2):
  #         print("got a new frame")
           # Reshape our one-dimensional image into a two-channel side-by-side view of the Rigel's feed
           frame       = np.reshape  (frame, (frameHeight, frameWidth * 2))
+          if leftEye == 0:
+            frame[:,0:halfpoint] = 0
+          else:                                           
+            frame[:,halfpoint:fullpoint] = 0                            
           frame_color = cv2.cvtColor(frame , cv2.COLOR_GRAY2BGR)
           bitIndex = int((stage-1)/2)
           if frameCount%6 is 0 and frameCount > 0: #key & 0xFF == ord('z'): #
             if stage is 0:
+              time.sleep(0.1)              
               # Capture all Black Buffer
               darkFrameBuffer = frame.copy()
               # Set Display to White
               displayedBuffer = allWhite
               if leftEye == 0:
-                displayedBuffer[:,0:halfpoint] = 0
+                displayedBuffer[:,0:halfPointDisplay] = 0
               else:
-                displayedBuffer[:,halfpoint:fullpoint] = 0              
+                displayedBuffer[:,halfPointDisplay:fullPointDisplay] = 0              
             elif stage is 1:
+              time.sleep(0.1)              
               # Calculate the Monitor Mask and display it
               mask = cv2.threshold(cv2.subtract(frame, darkFrameBuffer), thresh=53, maxval=1, type=cv2.THRESH_BINARY)[1]
+
               if leftEye == 0:
                 mask[:,0:halfpoint] = 0
                 cv2.imwrite("maskLeft.png",mask*whiteBrightness)
               else:
                 mask[:,halfpoint:fullpoint] = 0                             
                 cv2.imwrite("maskRight.png",mask*whiteBrightness)
-              #cv2.imshow("Graycode Display", mask * whiteBrightness)
-              
+              #cv2.imshow("Graycode Display", mask * whiteBrightness)              
               # Begin displaying the Width Bits
               displayedBuffer = widthBits [:, :, bitIndex] * whiteBrightness
-              if leftEye == 0:
-                displayedBuffer[:,0:halfpoint] = 0
-              else:
-                displayedBuffer[:,halfpoint:fullpoint] = 0              
-
             elif stage < 17:
               if stage % 2 is 0:
                 darkFrameBuffer = frame.copy()
                 displayedBuffer = (1 - widthBits [:, :, bitIndex]) * whiteBrightness
-                if leftEye == 0:
-                  displayedBuffer[:,0:halfpoint] = 0
-                else:
-                  displayedBuffer[:,halfpoint:fullpoint] = 0              
               else:
                 bitmask = cv2.threshold(cv2.subtract(frame, darkFrameBuffer), thresh=1, maxval=1, type=cv2.THRESH_BINARY)[1]
                 #cv2.imshow("Graycode Display", bitmask.copy() * mask * whiteBrightness)
-
                 # Add this bitmask to the built up bitmask
                 lastResult = bitmask == lastResult # xor with last bitmask - Grey -> binary
                 widthMeasuredBits[:, :, bitIndex-1] = lastResult
-
                 displayedBuffer =      widthBits [:, :, bitIndex]  * whiteBrightness
-                if leftEye == 0:
-                  displayedBuffer[:,0:halfpoint] = 0
-                else:
-                  displayedBuffer[:,halfpoint:fullpoint] = 0              
             elif stage < 33:
               if stage is 17:
                 # The Width Bits have finished displaying, we can now pack the graycode bits back into a byte mapping
@@ -161,26 +157,16 @@ for leftEye in range(2):
                 lastResult.fill(0)
                 darkFrameBuffer.fill(0)
                 frame.fill(0)
-
               if stage % 2 is 0:
                 darkFrameBuffer = frame.copy()
                 displayedBuffer = (1 - heightBits [:, :, bitIndex-8]) * whiteBrightness
-                if leftEye == 0:
-                  displayedBuffer[:,0:halfpoint] = 0
-                else:
-                  displayedBuffer[:,halfpoint:fullpoint] = 0              
               else:
                 bitmask = cv2.threshold(cv2.subtract(frame, darkFrameBuffer), thresh=1, maxval=1, type=cv2.THRESH_BINARY)[1]
                 #cv2.imshow("Graycode Display", bitmask.copy() * mask * whiteBrightness)
 
                 lastResult = bitmask == lastResult # xor with last bitmask - Grey -> binary
                 heightMeasuredBits[:, :, bitIndex-9] = lastResult
-
                 displayedBuffer =      heightBits [:, :, bitIndex-8]  * whiteBrightness
-                if leftEye == 0:
-                  displayedBuffer[:,0:halfpoint] = 0
-                else:
-                  displayedBuffer[:,halfpoint:fullpoint] = 0              
             else:
                 # The Width Bits have finished displaying, we can now pack the graycode bits back into a byte mapping
                 if leftEye == 0:
@@ -200,27 +186,23 @@ for leftEye in range(2):
                   imgHeightRight = cv2.imread("./HeightCalibration-Right.png",0)
                   imgWidthLeft = cv2.imread("./WidthCalibration-Left.png",0)
                   imgWidthRight = cv2.imread("./WidthCalibration-Right.png",0)
- #                 h , w = imgHeightLeft.shape
-#                  wHalf = int(w/2)
-#                  cmbImgHeight = calculatedHeightContinuum
-#                  cmbImgHeight[0:h,:wHalf] = imgHeightLeft[0:h,:wHalf]
-#                  cmbImgHeight[0:h,wHalf:w] = imgHeightRight[0:h,wHalf:w]
-
-#                  cmbImgWidth = calculatedWidthContinuum
-#                  cmbImgWidth[0:h,:wHalf] = imgWidthLeft[0:h,:wHalf]
-#                  cmbImgWidth[0:h,wHalf:w] = imgWidthRight[0:h,wHalf:w]
                   cv2.imwrite("./HeightCalibration.png",cv2.addWeighted(imgHeightLeft,1.0,imgHeightRight,1.0,0))
                   cv2.imwrite("./WidthCalibration.png",cv2.addWeighted(imgWidthLeft,1.0,imgWidthRight,1.0,0))
                   cv2.destroyAllWindows()
+                  print("Finished capturing! Running calibration <calibrateGrayCodes.py>")
+                  os.system("python ./calibrateGrayCodes.py")                  
                   exit()                 
                 
               # Display the height bits
             stage += 1
 
           cv2.imshow("Graycode Viewport", displayedBuffer)
-          
+
           # Display the resulting frame
-          cv2.imshow('Frame', frame_color)#cv2.resize(frame_color,  (384*2,384)))
+          cv2.imshow('Frame', frame_color)
+          cv2.setWindowProperty("Frame", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)          
+#          cv2.resizeWindow('Frame',  1280,720)
+          cv2.moveWindow("Frame",-0,0)          
           if rigel and (frameCount is 1):
             # Turn the Rigel LED Off
             os.system(".\LFTool.exe xu set leap 27 0")

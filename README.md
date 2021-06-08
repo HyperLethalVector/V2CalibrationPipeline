@@ -33,10 +33,8 @@ Note that this new calibration routine does not require an external monitor.
   - It helps to place a piece of cloth over the rig to shield the cameras + headset from ambient light.
   - Running this script will display a sequence of graycodes on your North Star, capturing them at the same time.
   - The sequence of binary codes will culminate in a 0-1 UV mapping, saved to **"./WidthCalibration.png"** **"./HeightCalibration.png"** in your main folder.
-
- - **calibrateGraycodes.py**
-  - Running this script will fit a 3rd-Degree 2D Polynomial to the left and right "eye"'s X and Y distortions.
-  - This polynomial will map from each display's 0-1 UV Coordinates to rectilinear coordinates (where a 3D ray direction is just (x, y, 1.0)).
+  - This script has now been modified to do each eye separately (for optics that have bleed between the lenses)
+  - this script will run the **calibrateGraycodes.py** script for you, no need to worry, just open the **"OpticalCalibrations.json"** file in your main folder.
 
 
 When you are finished, you may paste the output of the calibrateGraycodes.py into [this diagnostic shadertoy](https://www.shadertoy.com/view/wsscD4) to check for alignment.
